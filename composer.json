@@ -1,7 +1,7 @@
 {
 	"name": "wrd/wp-blocks",
 	"description": "Simplifies the process for WordPress themes to create and write ACF Pro Blocks.",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"type": "library",
 	"license": "MIT",
 	"autoload": {
@@ -22,6 +22,10 @@
 		}
 	],
 	"require": {
-		"php": "^8.1"
-	}
+		"php": "^8.1",
+		"adhocore/cli": "v1.9.4"
+	},
+	"bin": [
+		"bin/blocks"
+	]
 }

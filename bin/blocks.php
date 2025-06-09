@@ -1,0 +1,245 @@
+#!/usr/bin/env php
+<?php
+/**
+ * CLI Command for creating a new block directory.
+ *
+ * @package wrd/wp-blocks
+ */
+
+use Ahc\Cli\Application;
+use Ahc\Cli\Output\Writer;
+
+/**
+ * Autoload
+ */
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$app = new Application( 'app', '1.1.0' );
+
+$app
+	->command( 'scaffold', 'Scaffold the directory for a new theme block' )
+	->arguments( '<slug> [title]' )
+	->option( '-a --with-acf', 'Includes an ACF fields JSON file.' )
+	->option( '-c --with-css', 'Includes a CSS view file.' )
+	->option( '-j --with-js', 'Includes a JS view file.' )
+	->action(
+		function ( string $slug, ?string $title, bool $acf, bool $css, bool $js ) {
+			( new BlocksScaffoldCommand( $slug, $title, $acf, $css, $js ) )->handle();
+		}
+	);
+
+$app->defaultCommand( 'scaffold' );
+$app->handle( $_SERVER['argv'] );
+
+
+class BlocksScaffoldCommand {
+	private Writer $writer;
+
+	private string $slug;
+	private string $title;
+	private string $name;
+	private string $class;
+	private bool $has_acf;
+	private bool $has_css;
+	private bool $has_js;
+
+	private array $block_json;
+
+	private string $current_directory;
+	private string $block_directory;
+	private string $registry_directory;
+
+	public function __construct( string $slug, ?string $title, bool $acf, bool $css, bool $js ) {
+		if ( ! $title ) {
+			$title = str_replace( array( '-', '_' ), ' ', $slug );
+			$title = ucwords( $title );
+		}
+
+		$this->writer = new Writer();
+
+		$this->slug  = $slug;
+		$this->title = $title;
+
+		$this->name  = 'wrd/' . $this->slug;
+		$this->class = 'wp-block-' . str_replace( '/', '-', $this->name );
+
+		$this->has_acf = $acf;
+		$this->has_css = $css;
+		$this->has_js  = $js;
+
+		$this->block_json = array(
+			'$schema'  => 'https://raw.githubusercontent.com/AdvancedCustomFields/schemas/refs/heads/main/json/block.json',
+			'name'     => $this->name,
+			'title'    => $this->title,
+			'category' => 'design',
+			'supports' => array(
+				'align' => array(),
+			),
+			'acf'      => array(
+				'mode'           => 'preview',
+				'renderTemplate' => 'layout.php',
+			),
+		);
+
+		$this->current_directory  = getcwd();
+		$this->registry_directory = $this->current_directory . DIRECTORY_SEPARATOR . 'blocks';
+		$this->block_directory    = $this->registry_directory . DIRECTORY_SEPARATOR . $slug;
+	}
+
+	public function create_directory( string $dirpath, ?string $skip_message = null ): bool {
+		if ( is_dir( $dirpath ) ) {
+			if ( $skip_message ) {
+				$this->writer->warn( $skip_message );
+				$this->writer->eol();
+			}
+
+			return true;
+		}
+
+		$success = mkdir( $dirpath );
+
+		if ( ! $success ) {
+			$this->writer->comment( 'Failed to create directory: ' . $dirpath );
+			$this->writer->eol();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	public function create_file( string $filename, string $contents ): int {
+		$filepath = $this->block_directory . DIRECTORY_SEPARATOR . $filename;
+
+		if ( file_exists( $filepath ) ) {
+			$this->writer->warn( "Skipped: $filename" );
+			$this->writer->eol();
+
+			return 0;
+		}
+
+		$bytes   = file_put_contents( $filepath, $contents );
+		$success = is_numeric( $bytes ) && $bytes > 0;
+
+		if ( $success ) {
+			$this->writer->comment( "Created: $filename" );
+			$this->writer->eol();
+
+			return 1;
+		} else {
+			$this->writer->error( "Failed: $filename" );
+			$this->writer->eol();
+
+			return 0;
+		}
+	}
+
+	public function get_block_file() {
+		return json_encode( $this->block_json, JSON_PRETTY_PRINT );
+	}
+
+	public function get_layout_file(): string {
+		return "<?php
+/**
+ * Renders the {$this->title} block.
+ *
+ * @package wrd
+ */
+
+use function wrd\\wp_blocks\\templating\\block_atts;
+
+?>
+
+<section <?php block_atts( \$block ); ?> >
+	
+</section>";
+	}
+
+	public function get_acf_file(): string {
+		$acf_json = array(
+			'$schema'  => 'https://gist.githubusercontent.com/friartuck6000/32b0a1e531628a989627651e48acba2a/raw/c56dd34137e34c9187d8a48be90f5f2c7c6204ac/acf-field-group-schema.json',
+			'key'      => uniqid( 'group_' ),
+			'title'    => 'Block - ' . $this->title,
+			'fields'   => array(
+				array(
+					'key'   => uniqid( 'field_' ),
+					'name'  => '',
+					'label' => '',
+					'type'  => 'text',
+				),
+			),
+			'location' => array(
+				array(
+					array(
+						'param'    => 'block',
+						'operator' => '==',
+						'value'    => $this->name,
+					),
+				),
+			),
+		);
+
+		return json_encode( $acf_json, JSON_PRETTY_PRINT );
+	}
+
+	public function get_css_file(): string {
+		return ".{$this->class}{
+	/* ... */
+}";
+	}
+
+	public function get_js_file(): string {
+		return "(() => {
+	const selector = '{$this->class}';
+	const blocks = document.querySelectorAll(selector);
+
+	[...blocks].forEach(block => {
+		// ...
+	});
+})();";
+	}
+
+	public function handle(): bool {
+		$successful_file_count = 0;
+		$total_file_count      = 0;
+
+		$files = array(
+			'layout.php' => $this->get_layout_file(),
+		);
+
+		if ( $this->has_acf ) {
+			$files['acf.json'] = $this->get_acf_file();
+		}
+
+		if ( $this->has_css ) {
+			$files['style.css']        = $this->get_css_file();
+			$this->block_json['style'] = 'file:./style.css';
+		}
+
+		if ( $this->has_js ) {
+			$files['script.js']             = $this->get_js_file();
+			$this->block_json['viewScript'] = 'file:./script.js';
+		}
+
+		$files['block.json'] = $this->get_block_file();
+
+		if ( ! $this->create_directory( $this->registry_directory ) ) {
+			return false;
+		}
+
+		if ( ! $this->create_directory( $this->block_directory, 'Block directory already exists.' ) ) {
+			return false;
+		}
+
+		foreach ( $files as $filename => $contents ) {
+			$successful_file_count += $this->create_file( $filename, $contents );
+			$total_file_count++;
+		}
+
+		$this->writer->ok( "Scaffolding done: Created $successful_file_count/$total_file_count files." );
+		$this->writer->eol();
+		$this->writer->comment( $this->block_directory );
+
+		return true;
+	}
+}

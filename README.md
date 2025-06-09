@@ -12,6 +12,16 @@ You can use the `wrd\wp-blocks\get_theme_blocks_dir` filter to change the locati
 
 ---
 
+## Commands
+
+You can use the following command to quickly generate a block, with optional ACF, CSS and JS files.
+
+```
+./vendor/bin/blocks --help
+```
+
+---
+
 ## Registration
 
 **`register_all_theme_blocks`**
@@ -50,38 +60,38 @@ Used to dequeue the core block styles & global styles.
 
 ## Templating Functions
 
-`block_atts`
+**`block_atts`**
 
 Output the block's attributes. You can pass attributes of your own to be merged in.
 
-`block_is_editor`
+**`block_is_editor`**
 
 Checks if the block is currently being rendered for preview in the block editor.
 
-`block_has_style`
+**`block_has_style`**
 
 Check if the block has a style selected.
 
-`get_block_directory`
+**`get_block_directory`**
 
 Get the absolute filepath for the block's directory, with an optional append.
 
-`get_block_directory_uri`
+**`get_block_directory_uri`**
 
 Get the URL for the block's directory, with an optional append.
 
-`get_prose_blocks`
+**`get_prose_blocks`**
 
 Prose blocks are a set of blocks that are typically allowed as text content.
 
-`the_inner_blocks`
+**`the_inner_blocks`**
 
 Display a slot for the user to add child blocks.
 
-`the_bg_image`
+**`the_bg_image`**
 
 Display a style attribute for a background image.
 
-`the_link`
+**`the_link`**
 
 Easily display an ACF link field.
