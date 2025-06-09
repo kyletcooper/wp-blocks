@@ -1,8 +1,16 @@
 {
 	"name": "wrd/wp_blocks",
 	"description": "Simplifies the process for WordPress themes to create and write ACF Pro Blocks.",
+	"version": "1.0.0",
 	"type": "library",
-	"license": "GNU General Public License, version 2",
+	"license": "MIT",
+	"autoload": {
+		"files": [
+			"src/core.php",
+			"src/richtext.php",
+			"src/templating.php"
+		]
+	},
 	"authors": [
 		{
 			"name": "Kyle Cooper",
@@ -13,5 +21,7 @@
 			"homepage": "https://wrd.studio"
 		}
 	],
-	"require": {}
+	"require": {
+		"php": "^8.1"
+	}
 }
