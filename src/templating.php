@@ -2,7 +2,7 @@
 /**
  * Templating functions for within blocks.
  *
- * @package wrd\wp_blocks;
+ * @package wrd\wp-blocks;
  */
 
 namespace wrd\wp_blocks\templating;
@@ -150,7 +150,7 @@ function get_block_directory_uri( $block ): string {
  * @since 1.0.0
  */
 function get_prose_blocks(): array {
-	return apply_filters( 'wrd/wp_blocks/get_prose_blocks', array( 'core/heading', 'core/list', 'core/list-item', 'core/buttons', 'core/button', 'core/paragraph' ) ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
+	return apply_filters( 'wrd/wp-blocks/get_prose_blocks', array( 'core/heading', 'core/list', 'core/list-item', 'core/buttons', 'core/button', 'core/paragraph' ) ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
 }
 
 /**

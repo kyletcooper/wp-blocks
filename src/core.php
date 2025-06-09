@@ -21,7 +21,7 @@ use function wrd\wp_blocks\templating\block_is_editor;
  * @since 1.0.0
  */
 function get_all_theme_block_dirs(): array {
-	$dir = apply_filters( 'wrd/wp_blocks/get_theme_blocks_dir', get_template_directory() . '/blocks' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
+	$dir = apply_filters( 'wrd/wp-blocks/get_theme_blocks_dir', get_template_directory() . '/blocks' ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
 
 	$subdirs    = array_filter( glob( "$dir/*" ), 'is_dir' );
 	$block_dirs = array();
@@ -34,7 +34,7 @@ function get_all_theme_block_dirs(): array {
 		$block_dirs[] = $block_dir;
 	}
 
-	$block_dirs = apply_filters( 'wrd/wp_blocks/get_all_theme_block_dirs', $block_dirs ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
+	$block_dirs = apply_filters( 'wrd/wp-blocks/get_all_theme_block_dirs', $block_dirs ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
 
 	return $block_dirs;
 }

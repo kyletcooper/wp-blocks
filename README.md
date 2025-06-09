@@ -1,4 +1,4 @@
-# wrd\wp_blocks
+# wrd\wp-blocks
 
 Automatically creates blocks from the theme's blocks directory.
 
@@ -8,7 +8,7 @@ Automatically creates blocks from the theme's blocks directory.
 
 Use `register_all_theme_blocks` to register all blocks in the the themes' block directory. This defaults to `blocks/`.
 
-You can use the `wrd\wp_blocks\get_theme_blocks_dir` filter to change the location of the theme's blocks dir.
+You can use the `wrd\wp-blocks\get_theme_blocks_dir` filter to change the location of the theme's blocks dir.
 
 ---
 
