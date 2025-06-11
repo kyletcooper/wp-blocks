@@ -1,7 +1,7 @@
 {
 	"name": "wrd/wp-blocks",
 	"description": "Simplifies the process for WordPress themes to create and write ACF Pro Blocks.",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"type": "library",
 	"license": "MIT",
 	"autoload": {
