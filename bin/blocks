@@ -190,7 +190,7 @@ use function wrd\\wp_blocks\\templating\\block_atts;
 
 	public function get_js_file(): string {
 		return "(() => {
-	const selector = '{$this->class}';
+	const selector = '.{$this->class}';
 	const blocks = document.querySelectorAll(selector);
 
 	[...blocks].forEach(block => {
