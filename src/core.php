@@ -295,7 +295,7 @@ function set_use_inner_blocks_wrapper( $block_name, bool $use_wrapper = false ):
  *
  * @since 1.0.0
  */
-function register_block_category( $slug, $title ) {
+function register_block_category( string $slug, string $title ):void {
 	add_filter(
 		'block_categories_all',
 		function ( $categories ) use ( $slug, $title ) {
@@ -308,6 +308,39 @@ function register_block_category( $slug, $title ) {
 			);
 
 			return $categories;
+		}
+	);
+}
+
+/**
+ * Unregister a style from an existing block.
+ *
+ * This is different from WordPress core's function, which only targets styles registed via PHP.
+ *
+ * @param string $block The block slug.
+ *
+ * @param string $slug The slug of the style.
+ *
+ * @return void
+ *
+ * @since 1.1.0
+ */
+function unregister_js_block_style( string $block, string $slug ): void {
+	add_action(
+		'enqueue_block_editor_assets',
+		function () use ( $block, $slug ) {
+			printf(
+				"<script id='unregister-block-style-%s' defer>
+						window.addEventListener('DOMContentLoaded', () => {
+							const { unregisterBlockStyle } = wp.blocks;
+
+							unregisterBlockStyle('%s', '%s');
+						})
+					</script>",
+				esc_attr( $slug ),
+				esc_attr( $block ),
+				esc_attr( $slug ),
+			);
 		}
 	);
 }
