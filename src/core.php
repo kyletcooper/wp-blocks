@@ -323,7 +323,7 @@ function register_block_category( string $slug, string $title ):void {
  *
  * @return void
  *
- * @since 1.1.0
+ * @since 1.2.1
  */
 function unregister_js_block_style( string $block, string $slug ): void {
 	add_action(
