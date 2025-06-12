@@ -385,3 +385,37 @@ function _set_use_core_styles() {
 	wp_dequeue_style( 'wp-block-button' );
 	wp_dequeue_style( 'wp-block-separator' );
 }
+
+/**
+ * Remove one of the core editors CSS rules, to prevent it colliding with your own.
+ *
+ * Rules are removed from 'wp-edit-post-css'.
+ *
+ * @param string $selector The selector of the rule to remove.
+ *
+ * @return void
+ *
+ * @since 1.3.0
+ */
+function remove_core_editor_rule( string $selector ) {
+	add_action(
+		'enqueue_block_editor_assets',
+		function () use ( $selector ) {
+			printf(
+				"const wpEditPostSheet = document.getElementById('wp-edit-post-css').sheet;
+				const badRuleSelector = '%s';
+
+				const badRuleIndex = [...wpEditPostSheet.cssRules].findIndex((rule) => {
+					if (rule instanceof CSSStyleRule) {
+						return rule.selectorText === badRuleSelector;
+					}
+
+					return false;
+				});
+
+				wpEditPostSheet.deleteRule(badRuleIndex);",
+				esc_attr( $selector ),
+			);
+		}
+	);
+}
