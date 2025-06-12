@@ -403,18 +403,20 @@ function remove_core_editor_rule( string $selector ) {
 		function () use ( $selector ) {
 			printf(
 				"<script id='remove_core_editor_rule-%s' defer>
-					const wpEditPostSheet = document.getElementById('wp-edit-post-css').sheet;
-					const badRuleSelector = '%s';
+					window.addEventListener('DOMContentLoaded', () => {
+						const wpEditPostSheet = document.getElementById('wp-edit-post-css').sheet;
+						const badRuleSelector = '%s';
 
-					const badRuleIndex = [...wpEditPostSheet.cssRules].findIndex((rule) => {
-						if (rule instanceof CSSStyleRule) {
-							return rule.selectorText === badRuleSelector;
-						}
+						const badRuleIndex = [...wpEditPostSheet.cssRules].findIndex((rule) => {
+							if (rule instanceof CSSStyleRule) {
+								return rule.selectorText === badRuleSelector;
+							}
 
-						return false;
+							return false;
+						});
+
+						wpEditPostSheet.deleteRule(badRuleIndex);
 					});
-
-					wpEditPostSheet.deleteRule(badRuleIndex);
 				</script>",
 				esc_attr( sanitize_title( $selector ) ),
 				esc_attr( $selector ),
