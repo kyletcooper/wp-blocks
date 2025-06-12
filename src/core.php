@@ -159,7 +159,7 @@ function register_all_theme_blocks() {
  * @since 1.0.0
  */
 function set_include_theme_block_styles_before_render(): void {
-	add_filter( 'render_block', __NAMESPACE__ . '\\__include_theme_block_styles_before_render', 10, 2 );
+	add_filter( 'render_block', __NAMESPACE__ . '\\_include_theme_block_styles_before_render', 10, 2 );
 	add_filter( 'should_load_separate_core_block_assets', '__return_true' );
 }
 
