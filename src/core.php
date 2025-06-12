@@ -137,13 +137,24 @@ function register_theme_block( string $block_dir ): \WP_Block_Type|false {
 /**
  * Registers all the blocks the themes block directory.
  *
+ * @return void
+ *
  * @since 1.0.0
  */
-function register_all_theme_blocks() {
-	$block_dirs = get_all_theme_block_dirs();
-
-	foreach ( $block_dirs as $block_dir ) {
-		register_theme_block( $block_dir );
+function register_all_theme_blocks(): void {
+	if ( did_action( 'init' ) ) {
+		foreach ( get_all_theme_block_dirs() as $block_dir ) {
+			register_theme_block( $block_dir );
+		}
+	} else {
+		add_action(
+			'init',
+			function() : void {
+				foreach ( get_all_theme_block_dirs() as $block_dir ) {
+					register_theme_block( $block_dir );
+				}
+			}
+		);
 	}
 }
 
