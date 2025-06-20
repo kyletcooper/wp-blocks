@@ -395,6 +395,7 @@ function _set_use_core_styles() {
 	wp_dequeue_style( 'wp-block-list-item' );
 	wp_dequeue_style( 'wp-block-button' );
 	wp_dequeue_style( 'wp-block-separator' );
+	wp_dequeue_style( 'wp-block-table' );
 }
 
 /**
