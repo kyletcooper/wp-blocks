@@ -155,7 +155,7 @@ use function wrd\\wp_blocks\\templating\\block_atts;
 </section>";
 	}
 
-	public function get_acf_file(): string {
+	public function get_acf_file(): array {
 		$acf_json = array(
 			'$schema'  => 'https://gist.githubusercontent.com/friartuck6000/32b0a1e531628a989627651e48acba2a/raw/c56dd34137e34c9187d8a48be90f5f2c7c6204ac/acf-field-group-schema.json',
 			'key'      => uniqid( 'group_' ),
@@ -179,7 +179,10 @@ use function wrd\\wp_blocks\\templating\\block_atts;
 			),
 		);
 
-		return json_encode( $acf_json, JSON_PRETTY_PRINT );
+		$filename = $acf_json['key'] . '.json';
+		$contents = json_encode( $acf_json, JSON_PRETTY_PRINT );
+
+		return [ $filename, $contents ];
 	}
 
 	public function get_css_file(): string {
@@ -208,7 +211,8 @@ use function wrd\\wp_blocks\\templating\\block_atts;
 		);
 
 		if ( $this->has_acf ) {
-			$files['acf.json'] = $this->get_acf_file();
+			[$acf_filename, $acf_contents] = $this->get_acf_file();
+			$files[$acf_filename] = $acf_contents;
 		}
 
 		if ( $this->has_css ) {
