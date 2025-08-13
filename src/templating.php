@@ -39,6 +39,8 @@ function get_block_atts( array $block, array $atts = array(), string $return_for
 		$atts['class'] .= ' align' . $block['align'];
 	}
 
+	$atts = apply_filters( 'wrd/wp-blocks/get_block_atts', $atts, $block ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
+
 	if ( ARRAY_N === $return_format ) {
 		return $atts;
 	}
