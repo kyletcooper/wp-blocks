@@ -31,7 +31,6 @@ $app
 $app->defaultCommand( 'scaffold' );
 $app->handle( $_SERVER['argv'] );
 
-
 class BlocksScaffoldCommand {
 	private Writer $writer;
 

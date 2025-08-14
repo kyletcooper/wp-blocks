@@ -11,6 +11,7 @@ namespace wrd\wp_blocks\core;
 
 use WP_Block_Type_Registry;
 
+use function wrd\wp_blocks\acf\register_theme_block_acf_json;
 use function wrd\wp_blocks\templating\block_is_editor;
 
 /**
@@ -40,6 +41,26 @@ function get_all_theme_block_dirs(): array {
 }
 
 /**
+ * Get the block name from a block's directory.
+ *
+ * @param string $block_dir The block directory.
+ *
+ * @return string|false
+ *
+ * @since 1.3.2
+ */
+function get_theme_block_name( string $block_dir ): string|false {
+	$block_json_file = file_get_contents( $block_dir . '/block.json' ); // phpcs:ignore -- Not a remote file.
+	$block_json      = json_decode( $block_json_file );
+
+	if ( $block_json && property_exists( $block_json, 'name' ) ) {
+		return $block_json->name;
+	}
+
+	return false;
+}
+
+/**
  * Get the names of every block registred by the theme.
  *
  * @return string[]
@@ -51,11 +72,10 @@ function get_all_theme_block_names(): array {
 	$block_names = array();
 
 	foreach ( $dirs as $block_dir ) {
-		$block_json_file = file_get_contents( $block_dir . '/block.json' ); // phpcs:ignore -- Not a remote file.
-		$block_json      = json_decode( $block_json_file );
+		$block_name = get_theme_block_name( $block_dir );
 
-		if ( $block_json && property_exists( $block_json, 'name' ) ) {
-			$block_names[] = $block_json->name;
+		if ( $block_name ) {
+			$block_names[] = $block_name;
 		}
 	}
 
@@ -63,75 +83,28 @@ function get_all_theme_block_names(): array {
 }
 
 /**
- * Import an ACF JSON file for a block.
- *
- * @param string $acf_file Path to the file, without extension.
- *
- * @since 1.0.0
- */
-function import_theme_block_acf( string $acf_file ): void {
-	$php_file  = $acf_file . '.php';
-	$json_file = $acf_file . '.json';
-
-	if ( file_exists( $json_file ) ) {
-		$file_content = file_get_contents( $json_file ); // phpcs:ignore -- Not a remote file.
-		$field_groups = json_decode( $file_content, true );
-
-		if ( ! $field_groups ) {
-			return;
-		}
-
-		$has_string_keys = count( array_filter( array_keys( $field_groups ), 'is_string' ) ) > 0;
-
-		if ( $has_string_keys ) {
-			$field_groups = array( $field_groups );
-		}
-
-		if ( function_exists( 'acf_add_local_field_group' ) ) {
-			foreach ( $field_groups as $field_group ) {
-				/**
-				 * We check for the function first.
-				 *
-				 * @disregard P1010
-				 */
-				acf_add_local_field_group( $field_group );
-			}
-		} else {
-			add_action(
-				'acf/include_fields',
-				function() use ( $field_groups ) {
-					foreach ( $field_groups as $field_group ) {
-						/**
-						 * Only runs if the plugin is installed.
-						 *
-						 * @disregard P1010
-						 */
-						acf_add_local_field_group( $field_group );
-					}
-				}
-			);
-		}
-	}
-
-	if ( file_exists( $php_file ) ) {
-		include $php_file;
-	}
-}
-
-/**
  * Register an individual theme block.
  *
  * @param string $block_dir The directory of the block.
  *
- * @return \WP_Block_Type|false
+ * @return void
  *
  * @since 1.0.0
  */
-function register_theme_block( string $block_dir ): \WP_Block_Type|false {
-	$acf_file = $block_dir . '/acf';
-	import_theme_block_acf( $acf_file );
+function register_theme_block( string $block_dir ): void {
+	// ACF importing will use it's own hooks which may need to be run before 'init'.
+	register_theme_block_acf_json( $block_dir );
 
-	return register_block_type( $block_dir );
+	if ( did_action( 'init' ) ) {
+		register_block_type( $block_dir );
+	} else {
+		add_action(
+			'init',
+			function() use ( $block_dir ) : void {
+				register_block_type( $block_dir );
+			}
+		);
+	}
 }
 
 /**
@@ -142,19 +115,8 @@ function register_theme_block( string $block_dir ): \WP_Block_Type|false {
  * @since 1.0.0
  */
 function register_all_theme_blocks(): void {
-	if ( did_action( 'init' ) ) {
-		foreach ( get_all_theme_block_dirs() as $block_dir ) {
-			register_theme_block( $block_dir );
-		}
-	} else {
-		add_action(
-			'init',
-			function() : void {
-				foreach ( get_all_theme_block_dirs() as $block_dir ) {
-					register_theme_block( $block_dir );
-				}
-			}
-		);
+	foreach ( get_all_theme_block_dirs() as $block_dir ) {
+		register_theme_block( $block_dir );
 	}
 }
 
@@ -182,6 +144,10 @@ function set_include_theme_block_styles_before_render(): void {
  * @param array  $block The block being rendered.
  *
  * @return string The unaltered HTML.
+ *
+ * @internal
+ *
+ * @since 1.0.0
  */
 function _include_theme_block_styles_before_render( $html, $block ) {
 	if ( wp_doing_ajax() || defined( 'REST_REQUEST' ) || block_is_editor() ) {
@@ -263,34 +229,6 @@ function set_use_block_editor( bool $use_editor, ?string $post_type = null ): vo
 			return $allow;
 		},
 		$priority,
-		2
-	);
-}
-
-/**
- * Toggle whether ACF should add a wrapper to the inner blocks.
- *
- * Blocks are always wrapped when displaying in the editor! You might use display: 'contents' to help.
- *
- * @param string $block_name The name of the block to stop wrapper in.
- *
- * @param ?bool  $use_wrapper Whether to use the wrapper. Optional, defaults to false.
- *
- * @return void
- *
- * @since 1.0.0
- */
-function set_use_inner_blocks_wrapper( $block_name, bool $use_wrapper = false ): void {
-	add_filter(
-		'acf/blocks/wrap_frontend_innerblocks',
-		function ( $wrap, $name ) use ( $block_name, $use_wrapper ) {
-			if ( $name === $block_name ) {
-				return $use_wrapper;
-			}
-
-			return $wrap;
-		},
-		10,
 		2
 	);
 }
@@ -381,6 +319,8 @@ function set_use_core_styles( bool $use_core_styles = false ): void {
  * @return void
  *
  * @since 1.0.0
+ *
+ * @internal
  */
 function _set_use_core_styles() {
 	wp_dequeue_style( 'classic-theme-styles' );
@@ -405,18 +345,20 @@ function _set_use_core_styles() {
  *
  * @param string $selector The selector of the rule to remove.
  *
+ * @param string $stylesheet_id The ID of the stylesheet to remove the rule from. Defaults to 'wp-edit-post-css'.
+ *
  * @return void
  *
  * @since 1.3.0
  */
-function remove_core_editor_rule( string $selector ) {
+function remove_core_editor_rule( string $selector, string $stylesheet_id = 'wp-edit-post-css' ) {
 	add_action(
 		'enqueue_block_editor_assets',
-		function () use ( $selector ) {
+		function () use ( $selector, $stylesheet_id ) {
 			printf(
 				"<script id='remove_core_editor_rule-%s' defer>
 					window.addEventListener('DOMContentLoaded', () => {
-						const wpEditPostSheet = document.getElementById('wp-edit-post-css').sheet;
+						const wpEditPostSheet = document.getElementById('%s').sheet;
 						const badRuleSelector = '%s';
 
 						const badRuleIndex = [...wpEditPostSheet.cssRules].findIndex((rule) => {
@@ -431,6 +373,7 @@ function remove_core_editor_rule( string $selector ) {
 					});
 				</script>",
 				esc_attr( sanitize_title( $selector ) ),
+				esc_attr( $stylesheet_id ),
 				esc_attr( $selector ),
 			);
 		}
