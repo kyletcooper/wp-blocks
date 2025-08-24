@@ -21,25 +21,86 @@ namespace wrd\wp_blocks\templating;
  * @since 1.0.0
  */
 function get_block_atts( array $block, array $atts = array(), string $return_format = '' ): string|array {
-	if ( ! empty( $block['anchor'] ) ) {
-		$atts['id'] = $block['anchor'];
-	}
-
 	if ( ! isset( $atts['class'] ) ) {
 		$atts['class'] = '';
 	}
 
+	// Always put the block's base class first.
 	$atts['class'] = 'wp-block-' . sanitize_title( $block['name'] ) . ' ' . $atts['class'];
 
+	// Support for 'anchor'.
+	if ( ! empty( $block['anchor'] ) ) {
+		$atts['id'] = $block['anchor'];
+	}
+
+	// Support for 'className'.
 	if ( ! empty( $block['className'] ) ) {
 		$atts['class'] .= ' ' . $block['className'];
 	}
 
+	// Support for 'align'.
 	if ( ! empty( $block['align'] ) ) {
 		$atts['class'] .= ' align' . $block['align'];
 	}
 
+	// Support for 'alignContent'.
+	if ( $block['supports']['alignContent'] == 'matrix' ) {
+		$atts['class'] .= ' has-custom-content-position  is-position-' . str_replace( ' ', '-', $block['alignContent'] );
+	} else {
+		$atts['class'] .= ' is-vertically-aligned-' . $block['alignContent'];
+	}
+
+	// Support for 'fullHeight'.
+	if ( ! empty( $block['fullHeight'] ) ) {
+		$atts['class'] .= ' is-full-height';
+	}
+
+	// Support for 'colors.background'.
+	if ( ! empty( $block['backgroundColor'] ) ) {
+		$atts['class'] .= ' has-background';
+		$atts['class'] .= ' has-' . $block['backgroundColor'] . '-background-color';
+	}
+
+	// Support for 'colors.text'.
+	if ( ! empty( $block['textColor'] ) ) {
+		$atts['class'] .= ' has-text-color';
+		$atts['class'] .= ' has-' . $block['textColor'] . '-color';
+	}
+
+	$styles = array();
+
+	// Support for 'spacing.padding'.
+	if ( ! empty( $block['style']['spacing']['padding'] ) ) {
+		$styles['padding-top']    = $block['style']['spacing']['padding']['top'];
+		$styles['padding-right']  = $block['style']['spacing']['padding']['right'];
+		$styles['padding-bottom'] = $block['style']['spacing']['padding']['bottom'];
+		$styles['padding-left']   = $block['style']['spacing']['padding']['left'];
+	}
+
+	// Support for 'spacing.margin'.
+	if ( ! empty( $block['style']['spacing']['margin'] ) ) {
+		$styles['margin-top']    = $block['style']['spacing']['margin']['top'];
+		$styles['margin-right']  = $block['style']['spacing']['margin']['right'];
+		$styles['margin-bottom'] = $block['style']['spacing']['margin']['bottom'];
+		$styles['margin-left']   = $block['style']['spacing']['margin']['left'];
+	}
+
 	$atts = apply_filters( 'wrd/wp-blocks/get_block_atts', $atts, $block ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- Namespaced hook.
+
+	// Remove any styles without values.
+	$styles = array_filter( $styles, fn( $v ) => ! empty( $v ) );
+
+	if ( count( $styles ) > 0 ) {
+		// Styles are stored as an associative array, so we must flatten them into a string.
+		$styles_rules  = array_map( fn( $k, $v ) => "$k = $v", array_keys( $styles ), array_values( $styles ) );
+		$styles_string = join( '; ', $styles_rules );
+
+		if ( ! empty( $atts['style'] ) ) {
+			$atts['style'] .= '; ' . $styles_string;
+		} else {
+			$atts['style'] = $styles_string;
+		}
+	}
 
 	if ( ARRAY_N === $return_format ) {
 		return $atts;
