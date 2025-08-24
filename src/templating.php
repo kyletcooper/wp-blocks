@@ -44,10 +44,12 @@ function get_block_atts( array $block, array $atts = array(), string $return_for
 	}
 
 	// Support for 'alignContent'.
-	if ( $block['supports']['alignContent'] == 'matrix' ) {
-		$atts['class'] .= ' has-custom-content-position  is-position-' . str_replace( ' ', '-', $block['alignContent'] );
-	} else {
-		$atts['class'] .= ' is-vertically-aligned-' . $block['alignContent'];
+	if ( ! empty( $block['alignContent'] ) ) {
+		if ( $block['supports']['alignContent'] == 'matrix' ) {
+			$atts['class'] .= ' has-custom-content-position  is-position-' . str_replace( ' ', '-', $block['alignContent'] );
+		} else {
+			$atts['class'] .= ' is-vertically-aligned-' . $block['alignContent'];
+		}
 	}
 
 	// Support for 'fullHeight'.
