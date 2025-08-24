@@ -73,6 +73,7 @@ class BlocksScaffoldCommand {
 			'category' => 'design',
 			'supports' => array(
 				'align' => array(),
+				'anchor' => true,
 			),
 			'acf'      => array(
 				'mode'           => 'preview',
