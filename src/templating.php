@@ -401,3 +401,20 @@ function get_bg_image( string|int $image_id, string $size = 'large', string $sty
 function the_bg_image( string|int $image_id, string $size = 'large', string $style = '' ) {
 	echo get_bg_image( $image_id, $size, $style ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted.
 }
+
+/**
+ * Get the number of children the current block has.
+ *
+ * $wp_block can sometimes be null in certain contexts. If this happens this function returns 0.
+ *
+ * @param \WP_Block|null $wp_block The block.
+ *
+ * @return int
+ */
+function get_block_child_count( \WP_Block|null $wp_block ): int {
+	if ( is_null( $wp_block ) ) {
+		return 0;
+	}
+
+	return count( $wp_block->parsed_block['innerBlocks'] );
+}
